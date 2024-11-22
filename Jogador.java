@@ -1,10 +1,8 @@
-import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 public class Jogador {
     private int x,y;
@@ -25,14 +23,16 @@ public class Jogador {
         }
     }
 
-    public void moverEsquerda(){
+    public void mover(int larguraDaTela){
         x -= velocidade;
-        if (x<0) x = 0;
-    }
-
-    public void moverDireita(int larguraDaTela){
-        x += velocidade;
-        if (x+largura > larguraDaTela) x = larguraDaTela-largura;
+        if (x<0) {
+            x = 0;
+            velocidade *= -1;
+        } 
+        if (x+largura > larguraDaTela) {
+            x = larguraDaTela-largura;
+            velocidade *= -1;
+        }
     }
 
     public void desenhar(Graphics g){

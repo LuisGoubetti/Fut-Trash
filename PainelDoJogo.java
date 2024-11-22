@@ -54,6 +54,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         }
 
         private void atualizar() {
+            jogador.mover(getWidth());
            // Movimentação dos projéteis
            Iterator<Projetil> iteradorProjeteis = projeteis.iterator();
            while(iteradorProjeteis.hasNext()) {
@@ -106,12 +107,6 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            if(e.getKeyCode() == KeyEvent.VK_LEFT) {
-                jogador.moverEsquerda();
-            }
-            if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                jogador.moverDireita(getWidth());
-            }
             if(e.getKeyCode() == KeyEvent.VK_SPACE) {
                 projeteis.add(new Projetil(jogador.getX(),jogador.getY()));
             }
