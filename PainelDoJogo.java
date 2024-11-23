@@ -106,7 +106,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         @Override
         protected void paintComponent(Graphics g){
             super.paintComponent(g);
-            g.drawImage(bg, 0, 0, null);
+            g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
             // desenhar objs aqui
 
                if (lixo.isAtivo()) {
@@ -132,7 +132,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         @Override
         public void keyPressed(KeyEvent e) {
 
-            if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if(e.getKeyCode() == KeyEvent.VK_SPACE && lixo.isAtivo()) {
                 projeteis.add(new Projetil(lixo.getX(),lixo.getY(), lixo.getTipo()));
                 lixo.setAtivo(false); 
             }
