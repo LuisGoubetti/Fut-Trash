@@ -12,22 +12,22 @@ import java.util.Iterator;
 import java.util.List;
 
 public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
-        private Jogador jogador;
+        private Lixo lixo;
         private List<Projetil> projeteis = new ArrayList<>();
-        private List<Alienigena> alienigenas = new ArrayList<>();
+        private List<Lixeira> lixeiras = new ArrayList<>();
         private boolean rodando = false;
         private Thread threadDoJogo;
         private Image bg;
 
         public PainelDoJogo(){
-            jogador = new Jogador(375, 400);
+            lixo = new Lixo(375, 400);
             for(int i = 0; i < 15; i++) {
-                alienigenas.add(new Alienigena(i * 70, 40));
+                lixeiras.add(new Lixeira(i * 70, 40));
             }
             addKeyListener(this);
             setFocusable(true);
             try{
-                bg = ImageIO.read(getClass().getResource("/galaxia.jpg"));
+                bg = ImageIO.read(getClass().getResource("/imgs/Gol.jpg"));
             } catch (IOException e){
                 e.printStackTrace();
             }
@@ -54,7 +54,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         }
 
         private void atualizar() {
-            jogador.mover(getWidth());
+            lixo.mover(getWidth());
            // Movimentação dos projéteis
            Iterator<Projetil> iteradorProjeteis = projeteis.iterator();
            while(iteradorProjeteis.hasNext()) {
@@ -62,28 +62,45 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                 proj.mover();
                 if (proj.foraDaTela()) {
                     iteradorProjeteis.remove(); //Remove Projéteis que sairam da tela
+                    try {
+                        lixo.randomizarLixo();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    lixo.setAtivo(true);
                 }
            }    
-           for(Alienigena alien : alienigenas) {
+           for(Lixeira alien : lixeiras) {
             alien.mover();
            }    
             // verificar colisoes
-            List<Alienigena> alienigenasARemover = new ArrayList<>();
+            List<Lixeira> lixeirasARemover = new ArrayList<>();
             List<Projetil> projeteisARemover = new ArrayList<>();
 
-            for (Alienigena alien : alienigenas) {
+            boolean lixoDeveReaparecer = false;
+
+            for (Lixeira alien : lixeiras) {
                 for (Projetil proj : projeteis) {
                     if (alien.getLimites().intersects(proj.getLimite())) {
                         // Colisão detectada
-                        alienigenasARemover.add(alien); 
+                        lixeirasARemover.add(alien); 
                         projeteisARemover.add(proj); 
+                        lixoDeveReaparecer = true;
                     }
                 }
             }
 
-            alienigenas.removeAll(alienigenasARemover);
+            lixeiras.removeAll(lixeirasARemover);
             projeteis.removeAll(projeteisARemover);
 
+            if (lixoDeveReaparecer) {
+                try {
+                    lixo.randomizarLixo();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                lixo.setAtivo(true);
+            }
         }
 
         @Override
@@ -91,12 +108,19 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             super.paintComponent(g);
             g.drawImage(bg, 0, 0, null);
             // desenhar objs aqui
-            jogador.desenhar(g);
+
+               if (lixo.isAtivo()) {
+                try {
+                    lixo.desenhar(g);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         
             for (Projetil proj : projeteis) {
                 proj.desenhar(g);
             }
-            for(Alienigena alien : alienigenas ) {
+            for(Lixeira alien : lixeiras ) {
                 alien.desenhar(g);
             }
         }
@@ -107,8 +131,10 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void keyPressed(KeyEvent e) {
+
             if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-                projeteis.add(new Projetil(jogador.getX(),jogador.getY()));
+                projeteis.add(new Projetil(lixo.getX(),lixo.getY(), lixo.getTipo()));
+                lixo.setAtivo(false); 
             }
         }
 
