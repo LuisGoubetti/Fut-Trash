@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,11 +19,48 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         private boolean rodando = false;
         private Thread threadDoJogo;
         private Image bg;
+        private ArrayList<String> urlsAleatoria = new ArrayList<>();
+        private ArrayList<String> tiposAleatorio = new ArrayList<>();
+
+        //Funcao que fara com que os tipos de lixeiras fique aleatorios na hora de iniciar o jogo
+        private ArrayList<String> embaralharTipos(ArrayList<String> tipos) {
+            Collections.shuffle(tipos);
+            return tipos;
+        } 
+
+        //Funcao que compara as urls das imagens com os tipos ja embaralhados, para que possa adicionar as imagens de acordo com o tipo
+        private ArrayList<String> compararTipoComUrl(ArrayList<String> tipos) {
+            ArrayList<String> urls = new ArrayList<>();
+            
+            for(String tipo : tipos) {
+                for(String url : Lixeira.urlImages) {
+                    if(url.toUpperCase().contains(tipo.toUpperCase())) {
+                        urls.add(url);
+                    }
+                }
+            }
+            return urls;
+        }
+
 
         public PainelDoJogo(){
-            lixo = new Lixo(375, 400);
-            for(int i = 0; i < 15; i++) {
-                lixeiras.add(new Lixeira(i * 70, 40));
+            //Embaralhando os tipos que ja estao preenchidos na classe Lixeira
+            for(String tipo : embaralharTipos(Lixeira.tipos)) {
+                tiposAleatorio.add(tipo);
+            }
+
+            //Preenchendo a arrayList das urls com a ordem correta para o inicio do jogo
+            urlsAleatoria = compararTipoComUrl(tiposAleatorio);
+
+            //Instanciando lista para trabalhar com os valores de posicao armazenados na class Lixeira
+            List<Integer> posicaoX = new ArrayList<>(Lixeira.valoresXY.keySet());
+
+            lixo = new Lixo(375, 550);
+            for(int i = 0; i < 5; i++) {
+                Integer key = posicaoX.get(i); // Pega a chave na posição i
+                Integer posicaoY = Lixeira.valoresXY.get(key); // Obtém o valor associado à chave
+
+                lixeiras.add(new Lixeira(key, posicaoY, tiposAleatorio.get(i), urlsAleatoria.get(i))); //Criando as Lixeiras e adicionando à lista
             }
             addKeyListener(this);
             setFocusable(true);
