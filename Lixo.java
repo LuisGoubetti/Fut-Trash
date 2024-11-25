@@ -1,6 +1,6 @@
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.Random;
 
@@ -9,7 +9,8 @@ import javax.imageio.ImageIO;
 public class Lixo {
     private int x,y;
     private int largura = 10, altura = 10;
-    private int velocidade= 5;
+    private int velocidade;
+    private int direcao = 1;
     private Image imagem;
     private String tipo;
     private boolean ativo = true;
@@ -90,16 +91,19 @@ public class Lixo {
         this.imagem = imagem;
     }
 
-    public void mover(int larguraDaTela){
-        x -= velocidade;
-        if (x<0) {
+    public void mover(int larguraDaTela, int pontuacao){
+       velocidade = ((pontuacao/100)+1)*direcao;
+       x -= velocidade;
+       
+       if (x<=0) {
             x = 0;
-            velocidade *= -1;
+            direcao = -direcao;
         } 
-        if (x+largura > larguraDaTela) {
+        if (x+largura >= larguraDaTela) {
             x = larguraDaTela-largura;
-            velocidade *= -1;
+            direcao = -direcao;
         }
+        System.out.println(velocidade);
     }
 
     public void desenhar(Graphics g) throws IOException {
@@ -117,8 +121,16 @@ public class Lixo {
         return y;
     }
 
+    public int getVelocidade() {
+        return velocidade;
+    }
+
     public String getTipo() {
         return tipo;
+    }
+    
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     public void setAtivo(boolean b) {
@@ -128,5 +140,21 @@ public class Lixo {
     public boolean isAtivo() {
         return ativo;
     }
-    
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public void setVelocidade(int velocidade) {
+        this.velocidade = velocidade;
+    }
+
+    public void setDirecao(int direcao) {
+        this.direcao = direcao;
+    }
+       
 }

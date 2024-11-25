@@ -1,5 +1,4 @@
 import javax.swing.JFrame;
-
 public class JanelaDoJogo extends JFrame{
     public JanelaDoJogo(){
         this.setTitle("Fut-Trash");

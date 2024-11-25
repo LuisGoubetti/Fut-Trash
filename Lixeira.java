@@ -1,10 +1,8 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.Image;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 public class Lixeira {
     private int x,y;
@@ -39,4 +37,54 @@ public class Lixeira {
     public Rectangle getLimites(){
         return new Rectangle(x,y,largura, altura);
     }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getLargura() {
+        return largura;
+    }
+
+    public void setLargura(int largura) {
+        this.largura = largura;
+    }
+
+    public int getAltura() {
+        return altura;
+    }
+
+    public void setAltura(int altura) {
+        this.altura = altura;
+    }
+
+    public int getVelocidade() {
+        return velocidade;
+    }
+
+    public void setVelocidade(int velocidade) {
+        this.velocidade = velocidade;
+    }
+
+    public Image getImagem() {
+        return imagem;
+    }
+
+    public void setImagem(Image imagem) {
+        this.imagem = imagem;
+    }
+
+    
 }
