@@ -1,24 +1,29 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.Image;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 public class Lixeira {
+    public static ArrayList<String> tipos = new ArrayList<>(Arrays.asList("metal", "organico", "papel", "plastico", "vidro"));;
+    private String tipo;
     private int x,y;
-    private int largura = 40, altura = 20;
     private int velocidade = 2;
+    private int largura = 100, altura = 80;
     private Image imagem;
+    public static ArrayList<String> urlImages = new ArrayList<>(Arrays.asList("imgs/LixoMetal.png", "imgs/LixoOrganico.png", "imgs/LixoPapel.png", "imgs/LixoPlastico.png", "imgs/LixoVidro.png"));
+    public static Map<Integer, Integer> valoresXY = Map.of(170, 150, 360, 150, 110, 250, 280, 250, 450, 250);
 
-    public Lixeira(int inicioX, int inicioY){
+    public Lixeira(int inicioX, int inicioY, String tipo, String urlImage){
         this.x = inicioX;
         this.y = inicioY;
+        this.tipo = tipo;
         try{
-            imagem = ImageIO.read(getClass().getResource("/alien.png"));
-            largura = imagem.getWidth(null); 
-            altura = imagem.getHeight(null); 
+            imagem = ImageIO.read(getClass().getResource(urlImage));
         }catch(IOException e) {
             e.printStackTrace();
         }
@@ -26,14 +31,13 @@ public class Lixeira {
 
     public void mover(){
         x += velocidade;
-        if (x<=0 || x+largura >= 800){ // checa as bordas
+        if (x<=110 || x+largura >= 950){ // checa as bordas
             velocidade = -velocidade; //inverte dieção
-            y +=altura; //desce
         }
     }
 
     public void desenhar(Graphics g){
-        g.drawImage(imagem, x, y, null); 
+        g.drawImage(imagem, x, y, largura, altura,null); 
     }
 
     public Rectangle getLimites(){
