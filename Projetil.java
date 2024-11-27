@@ -1,9 +1,7 @@
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.io.IOException;
-import java.util.Random;
-
 import javax.imageio.ImageIO;
 
 public class Projetil {

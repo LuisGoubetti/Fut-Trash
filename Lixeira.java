@@ -1,11 +1,10 @@
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-
 import javax.imageio.ImageIO;
 
 public class Lixeira {
@@ -16,7 +15,7 @@ public class Lixeira {
     private int largura = 100, altura = 80;
     private Image imagem;
     public static ArrayList<String> urlImages = new ArrayList<>(Arrays.asList("imgs/LixoMetal.png", "imgs/LixoOrganico.png", "imgs/LixoPapel.png", "imgs/LixoPlastico.png", "imgs/LixoVidro.png"));
-    public static Map<Integer, Integer> valoresXY = Map.of(170, 150, 360, 150, 110, 250, 280, 250, 450, 250);
+    public static Map<Integer, Integer> valoresXY = Map.of(120, 140, 400, 140, 110, 360, 280, 250, 500, 360);
 
     public Lixeira(int inicioX, int inicioY, String tipo, String urlImage){
         this.x = inicioX;
@@ -42,5 +41,9 @@ public class Lixeira {
 
     public Rectangle getLimites(){
         return new Rectangle(x,y,largura, altura);
+    }
+
+    public String getTipo(){
+        return tipo;
     }
 }
