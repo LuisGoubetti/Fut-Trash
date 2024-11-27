@@ -3,7 +3,6 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.Random;
-
 import javax.imageio.ImageIO;
 
 public class Lixo {
@@ -103,7 +102,6 @@ public class Lixo {
             x = larguraDaTela-largura;
             direcao = -direcao;
         }
-        System.out.println(velocidade);
     }
 
     public void desenhar(Graphics g) throws IOException {
