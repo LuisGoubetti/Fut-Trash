@@ -75,7 +75,6 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             for(int i = 0; i < 5; i++) {
                 Integer key = posicaoX.get(i); // Pega a chave na posição i
                 Integer posicaoY = Lixeira.valoresXY.get(key); // Obtém o valor associado à chave
-
                 lixeiras.add(new Lixeira(key, posicaoY, tiposAleatorio.get(i), urlsAleatoria.get(i))); //Criando as Lixeiras e adicionando à lista
             }
             addKeyListener(this);
@@ -87,7 +86,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             }
             iniciar();
         }
-
+    
         public synchronized void iniciar() {
             rodando = true;
             threadDoJogo = new Thread(this);
@@ -96,6 +95,22 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void run() {
+            //som de fundo
+            try{
+                URL soundUReL = getClass().getResource("/sons/kokiri.wav");
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUReL);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+                clip.loop(Clip.LOOP_CONTINUOUSLY); //loopei o audio de fundo para tocar para sempre enquanto rodar
+                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN); //configuração para controlar altura (para não ficar muitop alto e abafar os outros sons)
+                gainControl.setValue(-10.0f);
+
+                clip.start();
+            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                e.printStackTrace();
+                System.out.println("Erro ao reproduzir som: " + e.getMessage());
+            }          
+
             //som de fundo
             try{
                 URL soundUReL = getClass().getResource("/sons/kokiri.wav");
@@ -132,8 +147,19 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                 proj.mover();
                 if (proj.foraDaTela()) {
                     iteradorProjeteis.remove(); //Remove Projéteis que sairam da tela
-                    vidas-=1;
+                    vidas  = (vidas==0) ? vidas = 0 : vidas-1;
 
+                    //Adicionando som quando projetil sai da tela
+                    try{
+                        URL soundUReL = getClass().getResource("/sons/errou.wav");
+                        AudioInputStream audioStriam = AudioSystem.getAudioInputStream(soundUReL);
+                        Clip clip = AudioSystem.getClip();
+                        clip.open(audioStriam);
+                        clip.start();
+                    } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                        e.printStackTrace();
+                        System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                    }                
                     //Adicionando som quando projetil sai da tela
                     try{
                         URL soundUReL = getClass().getResource("/sons/errou.wav");
@@ -151,9 +177,12 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                         e.printStackTrace();
                     }
                     lixo.setAtivo(true);
-                    pontuacao-=100;
-                    System.out.println("Pontuacao" + pontuacao);
+                    pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
                 }
+           }  
+
+           for(Lixeira lixeira : lixeiras) {
+                lixeira.mover();
            }  
 
            for(Lixeira lixeira : lixeiras) {
@@ -161,7 +190,6 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
            }    
 
            List<Projetil> projeteisARemover = new ArrayList<>();
-
            boolean lixoDeveReaparecer = false;
 
            for (Lixeira lixeira : lixeiras) {
@@ -182,7 +210,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                             System.out.println("Erro ao reproduzir som: " + e.getMessage());
                         }                          
                     } else{  
-                        pontuacao-=100;
+                        pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
                         //Adicionando sonzinho quando erra
                         try{
                             URL soundURL = getClass().getResource("/sons/errou.wav");
@@ -196,6 +224,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                         }                
                     }
                         projeteisARemover.add(proj); 
+                        lixoDeveReaparecer = true;                      
                         lixoDeveReaparecer = true;                      
                     }
                 }
@@ -272,7 +301,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         public void salvarProgresso(){
             ProgressoDoJogo progresso = new ProgressoDoJogo(lixo.getX(), lixo.getY(), pontuacao, vidas, lixo.getVelocidade(), lixo.getTipo());
             for(Lixeira lixeira : lixeiras){
-                progresso.addLixeiras(lixeira);
+                progresso.addPosicoesLixeiras(new int[]{lixeira.getX(), lixeira.getY()});
             }
             JogoUtils.salvarProgresso(progresso, "save.json");
             msg = "Progresso salvo com sucesso!";
@@ -293,10 +322,12 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                 }
                 pontuacao = progresso.getPontuacao();
                 vidas = progresso.getVidas();
-                lixeiras.clear();
-
-                for(Lixeira lixeira : progresso.getLixeiras()){
-                    lixeiras.add(lixeira);
+               // lixeiras.clear();
+                
+                for (int i = 0; i < lixeiras.size(); i++){
+                    int[] posicao = progresso.getPosicoesLixeiras().get(i);
+                    lixeiras.get(i).setX(posicao[0]);
+                    lixeiras.get(i).setY(posicao[1]);   
                 }
 
                 msg = "Progresso carregado com sucesso!";
