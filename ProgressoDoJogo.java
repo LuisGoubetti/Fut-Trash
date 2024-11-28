@@ -8,7 +8,7 @@ public class ProgressoDoJogo {
     private int vidas;
     private int velocidade;
     private String tipo;
-    private List<Lixeira> lixeiras;
+    private List<int[]> posicoesLixeiras;
 
     public ProgressoDoJogo(int posicaoLixoX, int posicaoLixoY, int pontuacao, int vidas, int velocidade, String tipo){
         this.posicaoLixoX = posicaoLixoX;
@@ -17,7 +17,7 @@ public class ProgressoDoJogo {
         this.vidas = vidas;
         this.velocidade = velocidade;  
         this.tipo = tipo;
-        this.lixeiras = new ArrayList<>();
+        this.posicoesLixeiras = new ArrayList<>();
     }
 
     // Getters e Setters
@@ -69,11 +69,11 @@ public class ProgressoDoJogo {
         this.tipo = tipo;
     }
 
-    public List<Lixeira> getLixeiras() {
-        return lixeiras;
+    public List<int[]> getPosicoesLixeiras() {
+        return posicoesLixeiras;
     }
 
-    public void addLixeiras(Lixeira posicoesLixeiras) {
-        this.lixeiras.add(posicoesLixeiras);
+    public void addPosicoesLixeiras(int[] posicoesLixeiras) {
+        this.posicoesLixeiras.add(posicoesLixeiras);
     }
 }
