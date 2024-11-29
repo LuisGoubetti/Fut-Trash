@@ -58,7 +58,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         public PainelDoJogo(){
             pontuacao = 0;
-            vidas = 1;
+            vidas = 5;
 
             //Embaralhando os tipos que ja estao preenchidos na classe Lixeira
             for(String tipo : embaralharTipos(Lixeira.tipos)) {
