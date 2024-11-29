@@ -302,15 +302,15 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             if (gameState == GameState.TUTORIAL && e.getKeyCode() == KeyEvent.VK_ENTER) {
                 gameState = GameState.PLAYING;
             }
-            if(e.getKeyCode() == KeyEvent.VK_SPACE && lixo.isAtivo()) {
+            if(e.getKeyCode() == KeyEvent.VK_SPACE && gameState==GameState.PLAYING) {
                 projeteis.add(new Projetil(lixo.getX(),lixo.getY(), lixo.getTipo()));
                 lixo.setAtivo(false); 
             }
-            if(e.getKeyCode() == KeyEvent.VK_S && lixo.isAtivo()) {
+            if(e.getKeyCode() == KeyEvent.VK_S && gameState==GameState.PLAYING) {
                 salvarProgresso();
                 desvanecer();
             }
-            if(e.getKeyCode() == KeyEvent.VK_L && lixo.isAtivo()) {
+            if(e.getKeyCode() == KeyEvent.VK_L && gameState==GameState.PLAYING) {
                 carregarProgresso();                
                 desvanecer();
             }
