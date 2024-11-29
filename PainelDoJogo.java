@@ -1,5 +1,3 @@
-import javax.swing.JPanel;
-import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -16,6 +14,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         private enum GameState {TITLE, TUTORIAL, PLAYING, GAME_OVER}
@@ -206,6 +206,8 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                              pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
                              //Adicionando sonzinho quando erra
                              try{
+                                vidas  = (vidas==0) ? vidas = 0 : vidas-1;
+                                verificarGameOver();
                                  URL soundURL = getClass().getResource("/sons/errou.wav");
                                  AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
                                  Clip clip = AudioSystem.getClip();
