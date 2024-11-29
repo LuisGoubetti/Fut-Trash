@@ -1,4 +1,9 @@
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import java.awt.Font;
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -15,18 +20,20 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JPanel;
 
 public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         private Lixo lixo;
         private List<Projetil> projeteis = new ArrayList<>();
         private List<Lixeira> lixeiras = new ArrayList<>();
+        private int pontuacao;
+        private int vidas;
+        private String msg = "";
         private boolean rodando = false;
         private Thread threadDoJogo;
         private Image bg;
         private ArrayList<String> urlsAleatoria = new ArrayList<>();
         private ArrayList<String> tiposAleatorio = new ArrayList<>();
-        private int pontuacao;
+        private int alpha = 255; 
 
         //Funcao que fara com que os tipos de lixeiras fique aleatorios na hora de iniciar o jogo
         private ArrayList<String> embaralharTipos(ArrayList<String> tipos) {
@@ -50,6 +57,9 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
 
         public PainelDoJogo(){
+            pontuacao = 0;
+            vidas = 5;
+
             //Embaralhando os tipos que ja estao preenchidos na classe Lixeira
             for(String tipo : embaralharTipos(Lixeira.tipos)) {
                 tiposAleatorio.add(tipo);
@@ -65,7 +75,6 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             for(int i = 0; i < 5; i++) {
                 Integer key = posicaoX.get(i); // Pega a chave na posição i
                 Integer posicaoY = Lixeira.valoresXY.get(key); // Obtém o valor associado à chave
-
                 lixeiras.add(new Lixeira(key, posicaoY, tiposAleatorio.get(i), urlsAleatoria.get(i))); //Criando as Lixeiras e adicionando à lista
             }
             addKeyListener(this);
@@ -77,7 +86,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             }
             iniciar();
         }
-
+    
         public synchronized void iniciar() {
             rodando = true;
             threadDoJogo = new Thread(this);
@@ -86,6 +95,22 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void run() {
+            //som de fundo
+            try{
+                URL soundUReL = getClass().getResource("/sons/kokiri.wav");
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUReL);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+                clip.loop(Clip.LOOP_CONTINUOUSLY); //loopei o audio de fundo para tocar para sempre enquanto rodar
+                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN); //configuração para controlar altura (para não ficar muitop alto e abafar os outros sons)
+                gainControl.setValue(-10.0f);
+
+                clip.start();
+            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                e.printStackTrace();
+                System.out.println("Erro ao reproduzir som: " + e.getMessage());
+            }          
+
             //som de fundo
             try{
                 URL soundUReL = getClass().getResource("/sons/kokiri.wav");
@@ -114,7 +139,7 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         }
 
         private void atualizar() {
-            lixo.mover(getWidth());
+            lixo.mover(getWidth(), pontuacao);
            // Movimentação dos projéteis
            Iterator<Projetil> iteradorProjeteis = projeteis.iterator();
            while(iteradorProjeteis.hasNext()) {
@@ -122,6 +147,19 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                 proj.mover();
                 if (proj.foraDaTela()) {
                     iteradorProjeteis.remove(); //Remove Projéteis que sairam da tela
+                    vidas  = (vidas==0) ? vidas = 0 : vidas-1;
+
+                    //Adicionando som quando projetil sai da tela
+                    try{
+                        URL soundUReL = getClass().getResource("/sons/errou.wav");
+                        AudioInputStream audioStriam = AudioSystem.getAudioInputStream(soundUReL);
+                        Clip clip = AudioSystem.getClip();
+                        clip.open(audioStriam);
+                        clip.start();
+                    } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                        e.printStackTrace();
+                        System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                    }                
                     //Adicionando som quando projetil sai da tela
                     try{
                         URL soundUReL = getClass().getResource("/sons/errou.wav");
@@ -139,54 +177,55 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
                         e.printStackTrace();
                     }
                     lixo.setAtivo(true);
-                    pontuacao--;
-                    System.out.println("Pontuacao" + pontuacao);
+                    pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
                 }
-           }    
-           for(Lixeira alien : lixeiras) {
-            alien.mover();
-           }    
-            List<Projetil> projeteisARemover = new ArrayList<>();
+           }  
 
-            boolean lixoDeveReaparecer = false;
+           for(Lixeira lixeira : lixeiras) {
+                lixeira.mover();
+           }  
 
-            for (Lixeira alien : lixeiras) {
-                for (Projetil proj : projeteis) {
-                    if (alien.getLimites().intersects(proj.getLimite())) {
-                        // Colisão detectada
-                        if (alien.getTipo().equalsIgnoreCase(proj.getTipo())){
-                            //Adicionando sonzinho quando acerta
-                            try{
-                                URL soundURL = getClass().getResource("/sons/acertou.wav");
-                                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
-                                Clip clip = AudioSystem.getClip();
-                                clip.open(audioStream);
-                                clip.start();
-                            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                                e.printStackTrace();
-                                System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                            }                          
-                            pontuacao++;
-                            System.out.println("pontuacao: " + pontuacao);
-                        } else{  
-                            //Adicionando sonzinho quando erra
-                            try{
-                                URL soundURL = getClass().getResource("/sons/errou.wav");
-                                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
-                                Clip clip = AudioSystem.getClip();
-                                clip.open(audioStream);
-                                clip.start();
-                            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                                e.printStackTrace();
-                                System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                            }                
-                            pontuacao--;
-                            System.out.println("pontuacao: " + pontuacao);
-                        }
+           for(Lixeira lixeira : lixeiras) {
+                lixeira.mover();
+           }    
+
+           List<Projetil> projeteisARemover = new ArrayList<>();
+           boolean lixoDeveReaparecer = false;
+
+           for (Lixeira lixeira : lixeiras) {
+            for (Projetil proj : projeteis) {
+                if (lixeira.getLimites().intersects(proj.getLimite())) {
+                    // Colisão detectada
+                    if (lixeira.getTipo().equalsIgnoreCase(proj.getTipo())){
+                        pontuacao+=100;
+                        //Adicionando sonzinho quando acerta
+                        try{
+                            URL soundURL = getClass().getResource("/sons/acertou.wav");
+                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
+                            Clip clip = AudioSystem.getClip();
+                            clip.open(audioStream);
+                            clip.start();
+                        } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                            e.printStackTrace();
+                            System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                        }                          
+                    } else{  
+                        pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
+                        //Adicionando sonzinho quando erra
+                        try{
+                            URL soundURL = getClass().getResource("/sons/errou.wav");
+                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
+                            Clip clip = AudioSystem.getClip();
+                            clip.open(audioStream);
+                            clip.start();
+                        } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                            e.printStackTrace();
+                            System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                        }                
+                    }
                         projeteisARemover.add(proj); 
-                        lixoDeveReaparecer = true;
-
-                        
+                        lixoDeveReaparecer = true;                      
+                        lixoDeveReaparecer = true;                      
                     }
                 }
             }
@@ -207,8 +246,18 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         protected void paintComponent(Graphics g){
             super.paintComponent(g);
             g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
+            g.setFont(new Font("Arial", Font.BOLD, 20));;
+            
+            Graphics2D g2d = (Graphics2D) g;
+            if (alpha > 0) {
+                g2d.setColor(Color.RED);
+                g2d.drawString(msg, 30, 50);
+            }
+            g.setColor(Color.BLACK);
+            g.drawString("Pontos: "+pontuacao, 30, 650);
+            g.drawString("Vidas: "+vidas, 30, 670);
+            
             // desenhar objs aqui
-
                if (lixo.isAtivo()) {
                 try {
                     lixo.desenhar(g);
@@ -220,8 +269,8 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             for (Projetil proj : projeteis) {
                 proj.desenhar(g);
             }
-            for(Lixeira alien : lixeiras ) {
-                alien.desenhar(g);
+            for(Lixeira lixeira : lixeiras ) {
+                lixeira.desenhar(g);
             }
         }
 
@@ -231,14 +280,72 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void keyPressed(KeyEvent e) {
-
             if(e.getKeyCode() == KeyEvent.VK_SPACE && lixo.isAtivo()) {
                 projeteis.add(new Projetil(lixo.getX(),lixo.getY(), lixo.getTipo()));
                 lixo.setAtivo(false); 
+            }
+            if(e.getKeyCode() == KeyEvent.VK_S && lixo.isAtivo()) {
+                salvarProgresso();
+                desvanecer();
+            }
+            if(e.getKeyCode() == KeyEvent.VK_L && lixo.isAtivo()) {
+                carregarProgresso();                
+                desvanecer();
             }
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
         }
+
+        public void salvarProgresso(){
+            ProgressoDoJogo progresso = new ProgressoDoJogo(lixo.getX(), lixo.getY(), pontuacao, vidas, lixo.getVelocidade(), lixo.getTipo());
+            for(Lixeira lixeira : lixeiras){
+                progresso.addPosicoesLixeiras(new int[]{lixeira.getX(), lixeira.getY()});
+            }
+            JogoUtils.salvarProgresso(progresso, "save.json");
+            msg = "Progresso salvo com sucesso!";
+        }
+
+        public void carregarProgresso(){
+            ProgressoDoJogo progresso = JogoUtils.carregarProgresso("save.json");
+            if (progresso != null){
+                lixo.setX(progresso.getPosicaoLixoX());
+                lixo.setY(progresso.getPosicaoLixoY());
+                lixo.setVelocidade(progresso.getVelocidade());
+                if (lixo.getVelocidade()>0) lixo.setDirecao(1); else lixo.setDirecao(-1);
+                lixo.setTipo(progresso.getTipo());
+                try {
+                    lixo.setImagem(lixo.carregarImagemTipo(lixo.getTipo()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                pontuacao = progresso.getPontuacao();
+                vidas = progresso.getVidas();
+               // lixeiras.clear();
+                
+                for (int i = 0; i < lixeiras.size(); i++){
+                    int[] posicao = progresso.getPosicoesLixeiras().get(i);
+                    lixeiras.get(i).setX(posicao[0]);
+                    lixeiras.get(i).setY(posicao[1]);   
+                }
+
+                msg = "Progresso carregado com sucesso!";
+            }
+            else msg = "Erro ao carregar o progresso.";
+        }
+
+        public void desvanecer(){
+            alpha = 255;
+            // Timer para criar o efeito de fade-out (executa a cada 50ms)
+            Timer timer = new Timer(50, e -> {
+                alpha -= 5; // Reduz a opacidade gradualmente
+                if (alpha <= 0) {
+                    ((Timer) e.getSource()).stop(); // Para o timer quando a string desaparecer
+                }
+                repaint(); // Atualiza o painel para aplicar o efeito
+            });
+            timer.start();
+        }
+    
 }

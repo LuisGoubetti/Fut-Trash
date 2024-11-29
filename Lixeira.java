@@ -28,6 +28,11 @@ public class Lixeira {
         }
     }
 
+    public Lixeira(int inicioX, int inicioY) {
+        this.x = inicioX;
+        this.y = inicioY;
+    }
+
     public void mover(){
         x += velocidade;
         if (x<=110 || x+largura >= 950){ // checa as bordas
@@ -43,6 +48,54 @@ public class Lixeira {
         return new Rectangle(x,y,largura, altura);
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getLargura() {
+        return largura;
+    }
+
+    public void setLargura(int largura) {
+        this.largura = largura;
+    }
+
+    public int getAltura() {
+        return altura;
+    }
+
+    public void setAltura(int altura) {
+        this.altura = altura;
+    }
+
+    public int getVelocidade() {
+        return velocidade;
+    }
+
+    public void setVelocidade(int velocidade) {
+        this.velocidade = velocidade;
+    }
+
+    public Image getImagem() {
+        return imagem;
+    }
+
+    public void setImagem(Image imagem) {
+        this.imagem = imagem;
+    }
+    
     public String getTipo(){
         return tipo;
     }
