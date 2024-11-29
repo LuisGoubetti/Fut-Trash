@@ -12,7 +12,7 @@ public class Lixeira {
     private String tipo;
     private int x,y;
     private int velocidade = 2;
-    private int largura = 100, altura = 80;
+    private int largura = 70, altura = 90;
     private Image imagem;
     public static ArrayList<String> urlImages = new ArrayList<>(Arrays.asList("imgs/LixoMetal.png", "imgs/LixoOrganico.png", "imgs/LixoPapel.png", "imgs/LixoPlastico.png", "imgs/LixoVidro.png"));
     public static Map<Integer, Integer> valoresXY = Map.of(120, 140, 400, 140, 110, 360, 280, 250, 500, 360);
