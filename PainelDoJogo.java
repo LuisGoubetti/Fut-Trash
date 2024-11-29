@@ -1,10 +1,6 @@
 import javax.swing.JPanel;
 import javax.swing.Timer;
-import java.awt.Font;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
@@ -22,6 +18,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
+        private enum GameState {TITLE, TUTORIAL, PLAYING, GAME_OVER}
+        private GameState gameState = GameState.TITLE;
         private Lixo lixo;
         private List<Projetil> projeteis = new ArrayList<>();
         private List<Lixeira> lixeiras = new ArrayList<>();
@@ -31,6 +29,9 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         private boolean rodando = false;
         private Thread threadDoJogo;
         private Image bg;
+        private Image gifGameOver;
+        private Image titleImage;
+        private Image tutorialImage;
         private ArrayList<String> urlsAleatoria = new ArrayList<>();
         private ArrayList<String> tiposAleatorio = new ArrayList<>();
         private int alpha = 255; 
@@ -55,10 +56,9 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             return urls;
         }
 
-
         public PainelDoJogo(){
             pontuacao = 0;
-            vidas = 5;
+            vidas = 1;
 
             //Embaralhando os tipos que ja estao preenchidos na classe Lixeira
             for(String tipo : embaralharTipos(Lixeira.tipos)) {
@@ -81,7 +81,10 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             setFocusable(true);
             try{
                 bg = ImageIO.read(getClass().getResource("/imgs/Gol.jpg"));
-            } catch (IOException e){
+                gifGameOver = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/imgs/gameover.gif"));
+                titleImage = ImageIO.read(getClass().getResource("/imgs/title.png"));
+                tutorialImage = ImageIO.read(getClass().getResource("/imgs/tutorial.png"));
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             iniciar();
@@ -93,43 +96,50 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             threadDoJogo.start();
         }
 
+        private void tocarSom(String caminho, boolean loop) {
+            try {
+                URL soundURL = getClass().getResource(caminho);
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+                if (loop) {
+                    clip.loop(Clip.LOOP_CONTINUOUSLY);
+                } else {
+                    clip.start();
+                }
+                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                gainControl.setValue(-10.0f); // Ajusta o volume para não ficar alto demais
+            } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+                e.printStackTrace();
+                System.out.println("Erro ao reproduzir som: " + e.getMessage());
+            }
+        }
+
         @Override
-        public void run() {
-            //som de fundo
-            try{
-                URL soundUReL = getClass().getResource("/sons/kokiri.wav");
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUReL);
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioStream);
-                clip.loop(Clip.LOOP_CONTINUOUSLY); //loopei o audio de fundo para tocar para sempre enquanto rodar
-                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN); //configuração para controlar altura (para não ficar muitop alto e abafar os outros sons)
-                gainControl.setValue(-10.0f);
-
-                clip.start();
-            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+        public void run() {           
+            if (gameState == GameState.TITLE) {
+                tocarSom("/sons/startup.wav", false);
+            }
+            // Aguarda o término do jingle para passar para o tutorial
+            try {
+                Thread.sleep(5000); 
+            } catch (InterruptedException e) {
                 e.printStackTrace();
-                System.out.println("Erro ao reproduzir som: " + e.getMessage());
-            }          
+            }
+            
+            // Exibe a tela de tutorial
+            gameState = GameState.TUTORIAL;
+            repaint();
 
-            //som de fundo
-            try{
-                URL soundUReL = getClass().getResource("/sons/kokiri.wav");
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUReL);
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioStream);
-                clip.loop(Clip.LOOP_CONTINUOUSLY); //loopei o audio de fundo para tocar para sempre enquanto rodar
-                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN); //configuração para controlar altura (para não ficar muitop alto e abafar os outros sons)
-                gainControl.setValue(-10.0f);
-
-                clip.start();
-            } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                e.printStackTrace();
-                System.out.println("Erro ao reproduzir som: " + e.getMessage());
-            }          
-
+            tocarSom("/sons/kokiri.wav", true);
             while(rodando){
-                atualizar();
-                repaint(); // Chama o método paintComponent para redesenhar os gráficos
+                if (gameState == GameState.PLAYING) {
+                    atualizar();
+                } else if (gameState == GameState.GAME_OVER) {
+                    repaint();
+                    break; 
+                }
+                repaint();
                 try {
                     Thread.sleep(16); // aproximadamente 60 fps
                 } catch (InterruptedException e) {
@@ -139,138 +149,145 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
         }
 
         private void atualizar() {
-            lixo.mover(getWidth(), pontuacao);
-           // Movimentação dos projéteis
-           Iterator<Projetil> iteradorProjeteis = projeteis.iterator();
-           while(iteradorProjeteis.hasNext()) {
-                Projetil proj = iteradorProjeteis.next();
-                proj.mover();
-                if (proj.foraDaTela()) {
-                    iteradorProjeteis.remove(); //Remove Projéteis que sairam da tela
-                    vidas  = (vidas==0) ? vidas = 0 : vidas-1;
-
-                    //Adicionando som quando projetil sai da tela
-                    try{
-                        URL soundUReL = getClass().getResource("/sons/errou.wav");
-                        AudioInputStream audioStriam = AudioSystem.getAudioInputStream(soundUReL);
-                        Clip clip = AudioSystem.getClip();
-                        clip.open(audioStriam);
-                        clip.start();
-                    } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                        e.printStackTrace();
-                        System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                    }                
-                    //Adicionando som quando projetil sai da tela
-                    try{
-                        URL soundUReL = getClass().getResource("/sons/errou.wav");
-                        AudioInputStream audioStriam = AudioSystem.getAudioInputStream(soundUReL);
-                        Clip clip = AudioSystem.getClip();
-                        clip.open(audioStriam);
-                        clip.start();
-                    } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                        e.printStackTrace();
-                        System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                    }                
-                    try {
-                        lixo.randomizarLixo();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    lixo.setAtivo(true);
-                    pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
-                }
-           }  
-
-           for(Lixeira lixeira : lixeiras) {
-                lixeira.mover();
-           }  
-
-           for(Lixeira lixeira : lixeiras) {
-                lixeira.mover();
-           }    
-
-           List<Projetil> projeteisARemover = new ArrayList<>();
-           boolean lixoDeveReaparecer = false;
-
-           for (Lixeira lixeira : lixeiras) {
-            for (Projetil proj : projeteis) {
-                if (lixeira.getLimites().intersects(proj.getLimite())) {
-                    // Colisão detectada
-                    if (lixeira.getTipo().equalsIgnoreCase(proj.getTipo())){
-                        pontuacao+=100;
-                        //Adicionando sonzinho quando acerta
-                        try{
-                            URL soundURL = getClass().getResource("/sons/acertou.wav");
-                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
-                            Clip clip = AudioSystem.getClip();
-                            clip.open(audioStream);
-                            clip.start();
-                        } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                            e.printStackTrace();
-                            System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                        }                          
-                    } else{  
-                        pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
-                        //Adicionando sonzinho quando erra
-                        try{
-                            URL soundURL = getClass().getResource("/sons/errou.wav");
-                            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
-                            Clip clip = AudioSystem.getClip();
-                            clip.open(audioStream);
-                            clip.start();
-                        } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
-                            e.printStackTrace();
-                            System.out.println("Erro ao reproduzir som: " + e.getMessage());
-                        }                
-                    }
-                        projeteisARemover.add(proj); 
-                        lixoDeveReaparecer = true;                      
-                        lixoDeveReaparecer = true;                      
-                    }
-                }
-            }
-
-            projeteis.removeAll(projeteisARemover);
-
-            if (lixoDeveReaparecer) {
-                try {
-                    lixo.randomizarLixo();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                lixo.setAtivo(true);
+            if (gameState == GameState.PLAYING) {
+                lixo.mover(getWidth(), pontuacao);
+     
+                // Movimentação dos projéteis
+                Iterator<Projetil> iteradorProjeteis = projeteis.iterator();
+                while(iteradorProjeteis.hasNext()) {
+                     Projetil proj = iteradorProjeteis.next();
+                     proj.mover();
+                     if (proj.foraDaTela()) {
+                         iteradorProjeteis.remove(); //Remove Projéteis que sairam da tela
+                         vidas  = (vidas==0) ? vidas = 0 : vidas-1;
+                         tocarSom("/sons/errou.wav", false);
+                         verificarGameOver();
+     
+                         try {
+                             lixo.randomizarLixo();
+                         } catch (IOException e) {
+                             e.printStackTrace();
+                         }
+     
+                         lixo.setAtivo(true);
+                         if (vidas>1) pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
+                     }
+                }  
+     
+                for(Lixeira lixeira : lixeiras) {
+                     lixeira.mover();
+                }  
+     
+                for(Lixeira lixeira : lixeiras) {
+                     lixeira.mover();
+                }    
+     
+                List<Projetil> projeteisARemover = new ArrayList<>();
+                boolean lixoDeveReaparecer = false;
+     
+                for (Lixeira lixeira : lixeiras) {
+                 for (Projetil proj : projeteis) {
+                     if (lixeira.getLimites().intersects(proj.getLimite())) {
+                         // Colisão detectada
+                         if (lixeira.getTipo().equalsIgnoreCase(proj.getTipo())){
+                             pontuacao+=100;
+                             //Adicionando sonzinho quando acerta
+                             try{
+                                 URL soundURL = getClass().getResource("/sons/acertou.wav");
+                                 AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
+                                 Clip clip = AudioSystem.getClip();
+                                 clip.open(audioStream);
+                                 clip.start();
+                             } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                                 e.printStackTrace();
+                                 System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                             }                          
+                         } else{  
+                             pontuacao = (pontuacao==0) ? pontuacao = 0 : pontuacao-100;
+                             //Adicionando sonzinho quando erra
+                             try{
+                                 URL soundURL = getClass().getResource("/sons/errou.wav");
+                                 AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundURL);
+                                 Clip clip = AudioSystem.getClip();
+                                 clip.open(audioStream);
+                                 clip.start();
+                             } catch(UnsupportedAudioFileException | IOException | LineUnavailableException e){
+                                 e.printStackTrace();
+                                 System.out.println("Erro ao reproduzir som: " + e.getMessage());
+                             }                
+                         }
+                             projeteisARemover.add(proj); 
+                             lixoDeveReaparecer = true;                      
+                             lixoDeveReaparecer = true;                      
+                         }
+                     }
+                 }
+     
+                 projeteis.removeAll(projeteisARemover);
+     
+                 if (lixoDeveReaparecer) {
+                     try {
+                         lixo.randomizarLixo();
+                     } catch (IOException e) {
+                         e.printStackTrace();
+                     }
+                     lixo.setAtivo(true);
+                 }
             }
         }
 
         @Override
         protected void paintComponent(Graphics g){
             super.paintComponent(g);
-            g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
-            g.setFont(new Font("Arial", Font.BOLD, 20));;
-            
-            Graphics2D g2d = (Graphics2D) g;
-            if (alpha > 0) {
-                g2d.setColor(Color.RED);
-                g2d.drawString(msg, 30, 50);
-            }
-            g.setColor(Color.BLACK);
-            g.drawString("Pontos: "+pontuacao, 30, 650);
-            g.drawString("Vidas: "+vidas, 30, 670);
-            
-            // desenhar objs aqui
-               if (lixo.isAtivo()) {
-                try {
-                    lixo.desenhar(g);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        
-            for (Projetil proj : projeteis) {
-                proj.desenhar(g);
-            }
-            for(Lixeira lixeira : lixeiras ) {
-                lixeira.desenhar(g);
+
+            switch (gameState) {
+                case TITLE:
+                    g.drawImage(titleImage, 0, 0, getWidth(), getHeight(), this);
+                    break;
+    
+                case TUTORIAL:
+                    g.drawImage(tutorialImage, 0, 0, getWidth(), getHeight(), this);
+                    break;
+    
+                case PLAYING:
+                    g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
+                    g.setFont(new Font("Arial", Font.BOLD, 20));;
+                    
+                    Graphics2D g2d = (Graphics2D) g;
+                    if (alpha > 0) {
+                        g2d.setColor(Color.RED);
+                        g2d.drawString(msg, 30, 50);
+                    }
+                    g.setColor(Color.BLACK);
+                    g.drawString("Pontos: "+pontuacao, 30, 650);
+                    g.drawString("Vidas: "+vidas, 30, 670);
+                    
+                    // desenhar objs aqui
+                    if (lixo.isAtivo()) {
+                        try {
+                            lixo.desenhar(g);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                
+                    for (Projetil proj : projeteis) {
+                        proj.desenhar(g);
+                    }
+                    for(Lixeira lixeira : lixeiras ) {
+                        lixeira.desenhar(g);
+                    }
+                    break;
+    
+                case GAME_OVER:
+                    if (gifGameOver != null) {
+                        g.drawImage(gifGameOver, 0, 0, getWidth(), getHeight(), this);
+                    }
+                    g.setFont(new Font("Arial", Font.BOLD, 40));
+                    g.setColor(Color.WHITE);
+                    String textoPontuacao = "Sua pontuação: " + pontuacao;
+                    int textoLargura = g.getFontMetrics().stringWidth(textoPontuacao);
+                    g.drawString(textoPontuacao, (getWidth() - textoLargura) / 2, getHeight() / 2);
             }
         }
 
@@ -280,6 +297,9 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
 
         @Override
         public void keyPressed(KeyEvent e) {
+            if (gameState == GameState.TUTORIAL && e.getKeyCode() == KeyEvent.VK_ENTER) {
+                gameState = GameState.PLAYING;
+            }
             if(e.getKeyCode() == KeyEvent.VK_SPACE && lixo.isAtivo()) {
                 projeteis.add(new Projetil(lixo.getX(),lixo.getY(), lixo.getTipo()));
                 lixo.setAtivo(false); 
@@ -348,4 +368,11 @@ public class PainelDoJogo extends JPanel implements Runnable, KeyListener {
             timer.start();
         }
     
+        private void verificarGameOver() {
+            if (vidas <= 0) {
+                rodando = false; 
+                gameState = GameState.GAME_OVER;
+                repaint(); 
+            }
+        }
 }
